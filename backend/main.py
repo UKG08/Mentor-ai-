@@ -1,5 +1,6 @@
 import json
 import asyncio
+import time
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -28,29 +29,41 @@ async def analyze_idea(request: IdeaRequest):
     idea = request.idea
 
     def run_pipeline():
-        expanded  = call_groq(expand_idea(idea))
-        persona   = call_groq(map_persona(expanded))
-        market    = call_groq(market_intelligence(expanded, persona))
-        criticism = call_groq(devil_advocate(expanded, market))
-        refined   = call_groq(stress_test(expanded, criticism))
-        moat      = call_groq(moat_analysis(refined, market, persona))
-        gtm       = call_groq(gtm_strategy(refined, persona, moat))
-        mvp       = call_groq(define_mvp(refined, persona, criticism))
-        tech      = call_groq(architect_tech(mvp, refined))
-        execution = call_groq(plan_execution(mvp, tech, gtm))
-        panel     = call_groq(panel_review(refined, mvp, execution, moat))
-        final     = call_groq(final_synthesis(
-            idea, expanded, persona, market,
-            criticism, refined, moat, gtm,
-            mvp, tech, execution, panel
-        ))
+        def step(prompt, large=False):
+            result = call_groq(prompt, use_large=large)
+            time.sleep(2)  # 2s pause keeps tokens/min well under 6k limit
+            return result
+
+        # Stages 1–11: fast 8B model
+        expanded  = step(expand_idea(idea))
+        persona   = step(map_persona(expanded))
+        market    = step(market_intelligence(expanded, persona))
+        criticism = step(devil_advocate(expanded, market))
+        refined   = step(stress_test(expanded, criticism))
+        moat      = step(moat_analysis(refined, market, persona))
+        gtm       = step(gtm_strategy(refined, persona, moat))
+        mvp       = step(define_mvp(refined, persona, criticism))
+        tech      = step(architect_tech(mvp, refined))
+        execution = step(plan_execution(mvp, tech, gtm))
+        panel     = step(panel_review(refined, mvp, execution, moat))
+
+        # Stage 12: best model for final JSON output
+        final = step(
+            final_synthesis(
+                idea, expanded, persona, market,
+                criticism, refined, moat, gtm,
+                mvp, tech, execution, panel
+            ),
+            large=True
+        )
         return final
 
     loop = asyncio.get_event_loop()
     final = await loop.run_in_executor(None, run_pipeline)
 
     try:
-        result = json.loads(clean_json(final))
+        cleaned_data = clean_json(final)
+        result = json.loads(cleaned_data)
     except Exception as e:
         result = {"error": "Could not parse final output", "raw": final}
 
