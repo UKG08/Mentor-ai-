@@ -3,6 +3,16 @@
 import { useEffect, useState } from 'react'
 import { AnalysisResult } from '@/lib/types'
 
+function useWindowWidth() {
+  const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024)
+  useEffect(() => {
+    const handler = () => setWidth(window.innerWidth)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return width
+}
+
 interface Props {
   result: AnalysisResult
   idea: string
@@ -327,9 +337,12 @@ export function ResultsReport({ result: d, idea, onBack }: Props) {
   const confScore = parseScore(d.confidence_score?.score)
   const invScore  = parseScore(d.investor_readiness?.score)
   const WEEK_COLORS = ['var(--sage)', 'var(--terra)', 'var(--gold)', '#9B7FD4']
+  const width = useWindowWidth()
+  const isMobile = width < 640
+  const isTablet = width < 900
 
   return (
-    <div style={{ maxWidth: 940, margin: '0 auto', padding: '2rem 1.25rem 6rem' }}>
+    <div style={{ maxWidth: 940, margin: '0 auto', padding: isMobile ? '1.25rem 0.75rem 4rem' : '2rem 1.25rem 6rem' }}>
 
       {/* ── HEADER ── */}
       <div style={{
@@ -379,16 +392,16 @@ export function ResultsReport({ result: d, idea, onBack }: Props) {
 
       {/* ── SCORES + PROBLEM ── */}
       <div style={{
-        display: 'grid', gridTemplateColumns: 'auto 1fr',
+        display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'auto 1fr',
         gap: 12, marginBottom: 12,
       }}>
         <Card style={{
-          display: 'flex', flexDirection: 'column',
+          display: 'flex', flexDirection: isMobile ? 'row' : 'column',
           alignItems: 'center', justifyContent: 'center',
-          gap: 28, padding: '1.5rem 2.5rem',
+          gap: isMobile ? 20 : 28, padding: isMobile ? '1.25rem' : '1.5rem 2.5rem',
         }}>
-          <ScoreRing score={confScore} color="var(--gold)" label="Confidence" />
-          <ScoreRing score={invScore}  color="var(--sage)" label="Investor Ready" />
+          <ScoreRing score={confScore} color="var(--gold)" label="Confidence" size={isMobile ? 90 : 120} />
+          <ScoreRing score={invScore}  color="var(--sage)" label="Investor Ready" size={isMobile ? 90 : 120} />
         </Card>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
@@ -419,7 +432,7 @@ export function ResultsReport({ result: d, idea, onBack }: Props) {
       {/* ── TARGET USERS ── */}
       <Card style={{ marginBottom: 12 }}>
         <SectionHeading accent="var(--gold)">Target Users</SectionHeading>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 14 }}>
           <div style={{ background: 'var(--surface2)', borderRadius: 10, padding: '12px 14px' }}>
             <MetaLabel color="var(--gold)">Primary User</MetaLabel>
             <p style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.6, margin: 0 }}>
@@ -442,7 +455,7 @@ export function ResultsReport({ result: d, idea, onBack }: Props) {
       </Card>
 
       {/* ── MARKET ANALYSIS ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 12 }}>
         <Card>
           <SectionHeading accent="var(--terra)">Market Size</SectionHeading>
           <ProgressBar value={100} color="var(--terra)" label="Total Addressable Market (TAM)" />
@@ -475,7 +488,7 @@ export function ResultsReport({ result: d, idea, onBack }: Props) {
       {/* ── MOAT ── */}
       <Card style={{ marginBottom: 12 }}>
         <SectionHeading accent="var(--gold)">Competitive Moat</SectionHeading>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 20 }}>
           <MoatBars primaryType={d.moat?.moat_type || ''} />
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             <div style={{ background: 'var(--surface2)', borderRadius: 10, padding: '12px 14px' }}>
@@ -504,7 +517,7 @@ export function ResultsReport({ result: d, idea, onBack }: Props) {
       {/* ── MVP ── */}
       <Card style={{ marginBottom: 12 }}>
         <SectionHeading accent="var(--sage)">MVP — v1 Scope</SectionHeading>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
           <div>
             <MetaLabel color="var(--sage)">3 Core Features</MetaLabel>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -555,7 +568,7 @@ export function ResultsReport({ result: d, idea, onBack }: Props) {
       {/* ── TECH STACK ── */}
       <Card style={{ marginBottom: 12 }}>
         <SectionHeading accent="var(--terra)">Tech Stack</SectionHeading>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 24px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '0 24px' }}>
           {(['frontend', 'backend', 'ai_layer', 'database', 'hosting', 'avoid'] as const).map((key) => {
             const labels: Record<string, string> = {
               frontend: 'Frontend', backend: 'Backend', ai_layer: 'AI Layer',
@@ -587,7 +600,7 @@ export function ResultsReport({ result: d, idea, onBack }: Props) {
       {/* ── GTM ── */}
       <Card style={{ marginBottom: 12 }}>
         <SectionHeading accent="var(--gold)">Go-To-Market</SectionHeading>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 10 }}>
           {([
             ['first_10_users',  'First 10 Users',  'var(--sage)' ],
             ['first_100_users', 'First 100 Users', 'var(--gold)' ],
@@ -618,7 +631,7 @@ export function ResultsReport({ result: d, idea, onBack }: Props) {
         }}>
           Expert Panel
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? '1fr 1fr' : '1fr 1fr 1fr', gap: 10 }}>
           <ExpertCard
             label="Founder" role="Been there, failed once"
             text={safe(d.expert_panel?.founder)}
@@ -640,8 +653,8 @@ export function ResultsReport({ result: d, idea, onBack }: Props) {
       {/* ── INVESTOR READINESS ── */}
       <Card style={{ marginBottom: 12 }}>
         <SectionHeading accent="var(--sage)">Investor Readiness</SectionHeading>
-        <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: 28, alignItems: 'center' }}>
-          <ScoreRing score={invScore} color="var(--sage)" label="Fundable" size={100} />
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'auto 1fr', gap: 28, alignItems: 'center' }}>
+          <ScoreRing score={invScore} color="var(--sage)" label="Fundable" size={isMobile ? 80 : 100} />
           <div>
             <ProgressBar
               value={invScore * 10}
@@ -658,7 +671,7 @@ export function ResultsReport({ result: d, idea, onBack }: Props) {
       </Card>
 
       {/* ── WATCH OUT + PIVOT ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12 }}>
         <div style={{
           background: 'rgba(196,107,78,0.07)',
           border: '1px solid rgba(196,107,78,0.25)',
