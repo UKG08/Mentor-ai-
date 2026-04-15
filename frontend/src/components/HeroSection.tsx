@@ -1,6 +1,16 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+
+function useWindowWidth() {
+  const [width, setWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1024)
+  useEffect(() => {
+    const handler = () => setWidth(window.innerWidth)
+    window.addEventListener('resize', handler)
+    return () => window.removeEventListener('resize', handler)
+  }, [])
+  return width
+}
 
 const PAIN_WORDS = [
   'what do I build first', 'is this even worth it', 'where do I start',
@@ -26,6 +36,8 @@ interface HeroSectionProps {
 
 export function HeroSection({ idea, error, onIdeaChange, onSubmit }: HeroSectionProps) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const width = useWindowWidth()
+  const isMobile = width < 640
 
   useEffect(() => {
     const container = containerRef.current
@@ -86,7 +98,9 @@ export function HeroSection({ idea, error, onIdeaChange, onSubmit }: HeroSection
 
         {/* Input */}
         <div style={{ opacity:0, animation:'revealUp 0.7s ease 0.6s forwards' }}>
-          <div style={{ display:'flex', border:'1.5px solid var(--border)', borderRadius:10,
+          <div style={{
+            display:'flex', flexDirection: isMobile ? 'column' : 'row',
+            border:'1.5px solid var(--border)', borderRadius:10,
             background:'var(--surface)', overflow:'hidden', transition:'border-color 0.25s' }}
             onFocus={e => (e.currentTarget.style.borderColor = 'var(--gold)')}
             onBlur={e  => (e.currentTarget.style.borderColor = 'var(--border)')}>
@@ -101,7 +115,8 @@ export function HeroSection({ idea, error, onIdeaChange, onSubmit }: HeroSection
             />
             <button onClick={onSubmit} disabled={!idea.trim()}
               style={{ background:'var(--gold)', color:'#0C0E11', border:'none',
-                padding:'0 1.5rem', fontFamily:'var(--sans)', fontWeight:600,
+                padding: isMobile ? '0.85rem 1.5rem' : '0 1.5rem',
+                fontFamily:'var(--sans)', fontWeight:600,
                 fontSize:'0.9rem', cursor: idea.trim() ? 'pointer' : 'not-allowed',
                 opacity: idea.trim() ? 1 : 0.5, transition:'background 0.2s', whiteSpace:'nowrap' }}>
               Analyze →
@@ -118,7 +133,7 @@ export function HeroSection({ idea, error, onIdeaChange, onSubmit }: HeroSection
         </div>
 
         {/* Trust */}
-        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:'2rem',
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap: isMobile ? '1rem' : '2rem',
           marginTop:'1.5rem', opacity:0, animation:'revealUp 0.7s ease 0.8s forwards', flexWrap:'wrap' }}>
           {['No login required','Groq + Llama 3.3 70B','~30 seconds'].map(label => (
             <div key={label} style={{ display:'flex', alignItems:'center', gap:6 }}>
